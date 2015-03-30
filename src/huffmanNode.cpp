@@ -10,6 +10,18 @@ namespace ptlmuh006{
         return data;
     }
 
+    int HuffmanNode::getFrequency(){
+        return frequency;
+    }
+
+    void HuffmanNode::setData(char newData){
+        data = newData;
+    }
+
+    void HuffmanNode::setFrequency(int newFrequency){
+        frequency = newFrequency;
+    }
+
     void HuffmanNode::setLeftChild(shared_ptr<HuffmanNode> newLeft){
         leftChild = newLeft;
     }
@@ -25,5 +37,10 @@ namespace ptlmuh006{
     shared_ptr<HuffmanNode> HuffmanNode::getRightChild(){
             return rightChild;
     }
+
+    //TODO: make this static?
+//    bool HuffmanNode::compare(HuffmanNode one, HuffmanNode other){
+//        return (one.frequency < other.frequency);
+//    }
 
 }
