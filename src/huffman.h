@@ -65,11 +65,11 @@ namespace ptlmuh006{
             void compress(std::string data, std::string outfilename);
             void extract(std::string inputfilename, std::string outputfilename);
 
-        //internal/private methods used to compress or extract the data
-        private:
+        //helper methods used to compress or extract the data
+        public:
             std::unordered_map<char, int> countFrequency(std::string data);
-            std::unordered_map<char, std::string> genCodeTbl(std::shared_ptr<HuffmanNode> current, std::string code); //generates codeTable from tree
-            void buildTree(std::string data, std::unordered_map<char, int> freqTbl); //builds h-tree from codeTable
+            void genCodeTbl(std::shared_ptr<HuffmanNode> current, std::string code, std::unordered_map<char, std::string>& codeTbl); //generates codeTable from tree
+            std::shared_ptr<HuffmanNode> buildTree(std::string data, std::unordered_map<char, int> freqTbl); //builds h-tree from codeTable
             std::unordered_map<char, std::string> readInCodeTable(std::string inputfilename);
             void addToTree(char key, std::string code); //used to help build tree from codeTable
     };
