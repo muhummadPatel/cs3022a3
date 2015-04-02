@@ -1,235 +1,287 @@
-#include <unordered_map>
-#include <sstream>
+/*
+ * HuffmanTree class implementation. This class models a HuffmanTree which consists of one or more HuffmanNodes. The
+ * tree allows for the compression and extraction of data. The 'compressed' data is actually written out as a string
+ * which means that it may not actually be compresses. This is just a demonstration of the concept.
+ *
+ * Muhummad Patel
+ * 07-Apr-2015
+ */
+
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <queue>
+#include <sstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "huffman.h"
-#include "reader.h"
 
 namespace ptlmuh006{
 
     using namespace std;
 
-    std::unordered_map<char, std::string> codeTbl;
+    //helper method used to read in the specified file as a single string
+    string readFile(string filename){
+        ostringstream outstr;
 
+        ifstream infile(filename);
+        std::string line;
+        while(std::getline(infile, line)){
+            outstr << line << "\n";
+        }
 
+        return outstr.str();
+    }
+
+    //copy constructor
     HuffmanTree::HuffmanTree(const HuffmanTree& other){
-        //copy constructor
         root = other.root;
     }
 
+    //move constructor
     HuffmanTree::HuffmanTree(HuffmanTree&& other){
-        //move constructor
         root = other.root;
 
         other.root = nullptr;
     }
 
+    //destructor
     HuffmanTree::~HuffmanTree(){
-        //destructor
-        //TODO: anything to put here really?
     }
 
+    //copy assignment
     HuffmanTree& HuffmanTree::operator= (const HuffmanTree& rhs){
-        //copy assignment
         root = rhs.root;
 
         return *this;
     }
 
+    //move assignment
     HuffmanTree& HuffmanTree::operator= (HuffmanTree&& rhs){
-        //move assignment
         root = rhs.root;
-
         rhs.root = nullptr;
 
         return *this;
     }
 
-    //TODO: Move this to somewhere decent
+    //==================COMPRESSION==================
 
-
-    void HuffmanTree::build(std::string data){
-        //TODO: split these up into seperate private methods?
-        //counting occurrences
-        unordered_map<char, int> freqTbl;
-        for(int i = 0; i < data.length(); i++){
-            freqTbl[data[i]]++;
-        }
-
-        //create the priority queue
-        typedef bool(*fptr)(shared_ptr<HuffmanNode>, shared_ptr<HuffmanNode>);
-
-        priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, fptr> q(HuffmanNode::compareNodes);
-        for(auto it = freqTbl.begin(); it != freqTbl.end(); ++it){
-            //TODO: fix this shit
-            shared_ptr<HuffmanNode> temp(new HuffmanNode(it->first, it->second));
-            q.push(temp);
-        }
-
-        while(q.size() > 1){
-            shared_ptr<HuffmanNode> n1 = q.top(); q.pop();
-            shared_ptr<HuffmanNode> n2 = q.top(); q.pop();
-
-            if(n1->getFrequency() < n2->getFrequency()){
-                //n1 should be the left child
-                shared_ptr<HuffmanNode> temp(new HuffmanNode);
-                temp->setLeftChild(n1);
-                temp->setRightChild(n2);
-                temp->setFrequency(n2->getFrequency() + n1->getFrequency());
-
-                q.push(temp);
-            }else{
-                //n2 should be the left child
-                shared_ptr<HuffmanNode> temp(new HuffmanNode);
-                temp->setLeftChild(n2);
-                temp->setRightChild(n1);
-                temp->setFrequency(n2->getFrequency() + n1->getFrequency());
-
-                q.push(temp);
-            }
-        }
-
-        cout << q.size() << " and top is " << q.top()->getFrequency() << endl;
-        root = q.top(); q.pop();
-
-        //build code table
-        genCodeTbl(root, "");
-        cout << "size is " << codeTbl.size() << endl;
-    }
-
-
-    void HuffmanTree::genCodeTbl(shared_ptr<HuffmanNode> current, std::string code){
-        if(current != nullptr){
-            genCodeTbl(current->getLeftChild(), code + "0");
-
-            if(current->getData() != '\0'){
-                //leaf node, so put code in the table
-                cout << current->getData() << " code: " << code << endl;
-                codeTbl[current->getData()] = code;
-            }
-
-            genCodeTbl(current->getRightChild(), code + "1");
-        }
-    }
-
-
+    //compresses the data stored in infilename and puts the compressed data in outfilename and outfilename.hdr. The data
+    //is compressed by first building a huffman tree corresponding to the given data, and then compressing it, using
+    //the generated codetable.
     void HuffmanTree::compress(std::string inFilename, std::string outFilename){
+        //read in file to be compressed
         string data = readFile(inFilename);
 
-        build(data);
+        //counting occurrences of characters
+        unordered_map<char, int> freqTbl = countFrequency(data);
 
-        ostringstream oss;
+        //build the corresponding huffman tree
+        buildTree(data, freqTbl);
+
+        //build code table from the tree
+        unordered_map<char, string> codeTbl = genCodeTbl(root, "");
+
+        //build up the compressed version using the code table
+        ostringstream compressedData;
         for(int i = 0; i < data.length(); i++){
-            oss << codeTbl[data[i]];
+            compressedData << codeTbl[data[i]];
         }
 
         //writing compressed data to output file
-        string output = oss.str();
-        cout << "outputted stuff: " << output << endl;
         ofstream outfile(outFilename);
-        outfile << output;
+        outfile << compressedData.str();
         outfile.close();
 
-        //writing code table to header file
+        //writing code table to header file (to allow for extraction later on)
         ofstream hdrfile(outFilename + ".hdr");
-        hdrfile << codeTbl.size() << endl;
+        hdrfile << codeTbl.size() << endl; //number of fields to be read in
         for(auto it = codeTbl.begin(); it != codeTbl.end(); ++it){
             ostringstream ss;
             ss << it->first;
             string ch = ss.str();
 
+            //use special character sequences for spaces and newlines in the header file
             if(ch == " "){
-                ch = "/s";
+                ch = "/s"; //'escaped' space
             }else if(ch == "\n"){
-                ch = "/n";
+                ch = "/n"; //'escaped' newline
             }
 
+            //write the character and the corresponding code to the header file
             hdrfile << ch << " " << it->second << endl;
         }
         hdrfile.close();
     }
 
-    void HuffmanTree::extract(std::string inputfilename){
-        unordered_map<char, std::string> newCodeTbl;
-
-        ifstream hdrFile(inputfilename + ".hdr");
-
-        int numFields;
-        hdrFile >> numFields >> ws;
-        cout << "numFields " << numFields << endl;
-
-        //TODO: check this matches with expected fields
-        //read in code table stored in header file
-        std::string data;
-        while(getline(hdrFile, data)){
-            //cout << "_" << data << "_" << endl;
-            istringstream iss(data);
-            char key;
-            string temp;
-            iss >> temp >> ws;
-            if(temp == "/s"){
-                key = ' ';
-            }else if(temp == "/n"){
-                key = '\n';
-            }else{
-                key = temp[0];
-            }
-            string code;
-            iss >> code >> ws;
-            cout << "key " << key << " code " << code << endl;
-
-            newCodeTbl[key] = code;
+    //returns an unordered_map with the frequency table corresponding to the given data.
+     unordered_map<char, int> HuffmanTree::countFrequency(string data){
+        unordered_map<char, int> freqTbl;
+        for(int i = 0; i < data.length(); i++){
+            freqTbl[data[i]]++;
         }
 
-        codeTbl = std::move(newCodeTbl);
+        return freqTbl;
+    }
+
+    //builds a huffman tree that corresponds to the data passed in as the argument. The tree built, is then stored in
+    //the object (a reference to the tree root is stored in the root member of this object).
+    void HuffmanTree::buildTree(string data, unordered_map<char, int> freqTbl){
+        //create the priority queue
+        typedef bool(*fptr)(shared_ptr<HuffmanNode>, shared_ptr<HuffmanNode>);
+        priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, fptr> q(HuffmanNode::compareNodes);
+        for(auto it = freqTbl.begin(); it != freqTbl.end(); ++it){
+            char key = it->first;
+            int frequency = it->second;
+            shared_ptr<HuffmanNode> temp(new HuffmanNode(key, frequency));
+
+            q.push(temp);
+        }
+
+        //build the tree from the priority queue until there is only the root left
+        while(q.size() > 1){
+            shared_ptr<HuffmanNode> min1 = q.top(); q.pop();
+            shared_ptr<HuffmanNode> min2 = q.top(); q.pop();
+
+            if(min1->getFrequency() < min2->getFrequency()){
+                //min1 should be the left child
+                shared_ptr<HuffmanNode> temp(new HuffmanNode);
+                temp->setLeftChild(min1);
+                temp->setRightChild(min2);
+                temp->setFrequency(min2->getFrequency() + min1->getFrequency());
+
+                q.push(temp);
+            }else{
+                //min2 should be the left child
+                shared_ptr<HuffmanNode> temp(new HuffmanNode);
+                temp->setLeftChild(min2);
+                temp->setRightChild(min1);
+                temp->setFrequency(min2->getFrequency() + min1->getFrequency());
+
+                q.push(temp);
+            }
+        }
+        //store the root of the tree in the root variable of this object
+        root = q.top(); q.pop();
+    }
+
+    //recursively walks through the tree building up the code as it branches and when it hits a leaf, it adds the data
+    //at that leaf and the code for that character to the codeTable.
+     std::unordered_map<char, std::string> HuffmanTree::genCodeTbl(shared_ptr<HuffmanNode> current, std::string code){
+        std::unordered_map<char, std::string> codeTbl;
+
+        if(current != nullptr){
+            genCodeTbl(current->getLeftChild(), code + "0");
+
+            if(current->getData() != '\0'){
+                //leaf node, so put code in the table
+                codeTbl[current->getData()] = code;
+            }
+
+            genCodeTbl(current->getRightChild(), code + "1");
+        }
+
+        return codeTbl;
+    }
+
+
+
+    //==================EXTRACTION==================
+
+    //extracts original data from the compressed version using the hdr file. It generates a huffman tree from the code
+    //table stored in the header file and then uses the tree to decompress the data. The decompressed data is stored in
+    //extracted_inputfilename.
+    void HuffmanTree::extract(string inputfilename, string outputfilename){
+        //read in code table stored in header file
+        unordered_map<char, string> codeTbl = readInCodeTable(inputfilename);
 
         //build huffman tree represented by the new code table
-        root.reset(new HuffmanNode);
+        root.reset(new HuffmanNode); //resetting the tree
         for(auto it = codeTbl.begin(); it != codeTbl.end(); ++it){
-//            cout << "aight" << endl;
-            addToTree(it->first, it->second);
+            char key = it->first;
+            string code = it->second;
+            addToTree(key, code);
         }
 
-        //decode input by decoding one letter at a time
+        //read in file to be extracted
         ifstream compressedFile(inputfilename);
         string encodedData;
         getline(compressedFile, encodedData);
-        ostringstream oss;
+
+        //loop through the encoded string and decode as we go along
+        ostringstream extractedData;
         int index = 0;
         shared_ptr<HuffmanNode> curr = root;
-        cout << root->getLeftChild() << endl;
-
         while(index < encodedData.length()){
-            cout << encodedData[index];
+            //follow branches
+
             if(curr->getData() != '\0'){
-                oss << curr->getData();
-                curr = root;
+                //when we hit a leaf, add this data to the extractedData stream
+                extractedData << curr->getData();
+                curr = root; //start at the root again
             }
 
+            //follow down to the next branch specified by the compressed string
             if(encodedData[index] == '0'){
-                curr = curr->getLeftChild();
+                curr = curr->getLeftChild(); //branch left
             }else{
-                curr = curr->getRightChild();
+                curr = curr->getRightChild(); //branch right
             }
 
             index++;
         }
 
-        cout <<endl<< oss.str() << endl;
+        //write extracted data to output file.
+        ofstream extracted(outputfilename);
+        extracted << extractedData.str();
     }
 
+    unordered_map<char, string> HuffmanTree::readInCodeTable(string inputfilename){
+        unordered_map<char, string> codeTbl;
 
+        fstream hdrFile(inputfilename + ".hdr");
+        int numFields;
+        hdrFile >> numFields >> ws;
 
+        int count = 0;
+        string data;
+        while(getline(hdrFile, data) && count < numFields){
+
+            //read in key as a string to account for multi characer sequences for newlines and spaces
+            istringstream iss(data);
+            string temp;
+            iss >> temp >> ws;
+
+            char key;
+            if(temp == "/s"){
+                key = ' '; //turn escaped space into actual space in the codeTable
+            }else if(temp == "/n"){
+                key = '\n'; //store escaped newline as an actual newline character in the codeTable
+            }else{
+                key = temp[0]; //store the actual character, whatever it is
+            }
+
+            //get the code corresponding to this character
+            string code;
+            iss >> code >> ws;
+
+            codeTbl[key] = code;
+            count++;
+        }
+
+        return codeTbl;
+    }
+
+    //helper method used when building huffman tree from a code table for extraction purposes. This method will add the
+    //given key into the tree at the location specified by the code and will build the tree as it goes along if
+    //neccessary.
     void HuffmanTree::addToTree(char key, string code){
         shared_ptr<HuffmanNode> currNode;
         currNode = root;
+
+        //follow branches specified by code all the way down the tree building as we go if neccessary
         for(int i = 0; i < code.length(); i++){
-
-
             if(code[i] == '0'){
                 if(currNode->getLeftChild() == nullptr){
                     shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
@@ -244,6 +296,8 @@ namespace ptlmuh006{
                 currNode = currNode->getRightChild();
             }
         }
+
+        //put the corresponding data at the appropriate location
         currNode->setData(key);
     }
 }

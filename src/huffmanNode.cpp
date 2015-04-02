@@ -1,3 +1,14 @@
+/*
+ * HuffmanNode class implementation. This class models the Nodes used to build the HuffmanTree. Each node stores a
+ * character (internal nodes have no character), and the frequency (# of times the character appeared in the data).
+ * The class also contains accessor and mutator methods to allow the tree to manipulate the nodes as neccessary.
+ * A static compareNodes method is also provided that compares two nodes and is used to order the nodes in the priority
+ * queue used in the HuffmanTree class.
+ *
+ * Muhummad Patel
+ * 07-Apr-2015
+ */
+
 #include <memory>
 
 #include "huffman.h"
@@ -6,16 +17,16 @@ namespace ptlmuh006{
 
     using namespace std;
 
+    //copy constructor
     HuffmanNode::HuffmanNode(const HuffmanNode& other){
-        //copy constructor
         data = other.data;
         frequency = other.frequency;
         leftChild = other.leftChild;
         rightChild = other.rightChild;
     }
 
+    //move constructor
     HuffmanNode::HuffmanNode(HuffmanNode&& other){
-        //move constructor
         data = other.data;
         frequency = other.frequency;
         leftChild = other.leftChild;
@@ -27,13 +38,12 @@ namespace ptlmuh006{
         other.rightChild = nullptr;
     }
 
+    //destructor
     HuffmanNode::~HuffmanNode(){
-        //destructor
-        //TODO: anything to put here really?
     }
 
+    //copy assignment
     HuffmanNode& HuffmanNode::operator= (const HuffmanNode& rhs){
-        //copy assignment
         data = rhs.data;
         frequency = rhs.frequency;
         leftChild = rhs.leftChild;
@@ -42,8 +52,8 @@ namespace ptlmuh006{
         return *this;
     }
 
+    //move assignment
     HuffmanNode& HuffmanNode::operator= (HuffmanNode&& rhs){
-        //move assignment
         data = rhs.data;
         frequency = rhs.frequency;
         leftChild = rhs.leftChild;
@@ -86,11 +96,10 @@ namespace ptlmuh006{
     }
 
     shared_ptr<HuffmanNode> HuffmanNode::getRightChild(){
-            return rightChild;
+        return rightChild;
     }
 
     bool HuffmanNode::compareNodes(shared_ptr<HuffmanNode> one, shared_ptr<HuffmanNode> other){
-                return (one->getFrequency() > other->getFrequency());
-
+        return (one->getFrequency() > other->getFrequency());
     }
 }
