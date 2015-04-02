@@ -78,10 +78,11 @@ namespace ptlmuh006{
         unordered_map<char, int> freqTbl = countFrequency(data);
 
         //build the corresponding huffman tree
-        buildTree(data, freqTbl);
+        root = buildTree(data, freqTbl);
 
         //build code table from the tree
-        unordered_map<char, string> codeTbl = genCodeTbl(root, "");
+        unordered_map<char, string> codeTbl;
+        genCodeTbl(root, "", codeTbl);
 
         //build up the compressed version using the code table
         ostringstream compressedData;
@@ -127,7 +128,7 @@ namespace ptlmuh006{
 
     //builds a huffman tree that corresponds to the data passed in as the argument. The tree built, is then stored in
     //the object (a reference to the tree root is stored in the root member of this object).
-    void HuffmanTree::buildTree(string data, unordered_map<char, int> freqTbl){
+    std::shared_ptr<HuffmanNode> HuffmanTree::buildTree(string data, unordered_map<char, int> freqTbl){
         //create the priority queue
         typedef bool(*fptr)(shared_ptr<HuffmanNode>, shared_ptr<HuffmanNode>);
         priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, fptr> q(HuffmanNode::compareNodes);
@@ -162,27 +163,23 @@ namespace ptlmuh006{
                 q.push(temp);
             }
         }
-        //store the root of the tree in the root variable of this object
-        root = q.top(); q.pop();
+        //return the root of the tree to be stored in the root variable of this object
+        return q.top();
     }
 
     //recursively walks through the tree building up the code as it branches and when it hits a leaf, it adds the data
     //at that leaf and the code for that character to the codeTable.
-     std::unordered_map<char, std::string> HuffmanTree::genCodeTbl(shared_ptr<HuffmanNode> current, std::string code){
-        std::unordered_map<char, std::string> codeTbl;
-
+     void HuffmanTree::genCodeTbl(shared_ptr<HuffmanNode> current, std::string code, std::unordered_map<char, std::string>& codeTbl){
         if(current != nullptr){
-            genCodeTbl(current->getLeftChild(), code + "0");
+            genCodeTbl(current->getLeftChild(), code + "0", codeTbl);
 
             if(current->getData() != '\0'){
                 //leaf node, so put code in the table
                 codeTbl[current->getData()] = code;
             }
 
-            genCodeTbl(current->getRightChild(), code + "1");
+            genCodeTbl(current->getRightChild(), code + "1", codeTbl);
         }
-
-        return codeTbl;
     }
 
 
