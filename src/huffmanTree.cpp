@@ -177,13 +177,21 @@ namespace ptlmuh006{
         while(getline(hdrFile, data)){
             //cout << "_" << data << "_" << endl;
             istringstream iss(data);
-            string key;
-            iss >> key >> ws;
+            char key;
+            string temp;
+            iss >> temp >> ws;
+            if(temp == "/s"){
+                key = ' ';
+            }else if(temp == "/n"){
+                key = '\n';
+            }else{
+                key = temp[0];
+            }
             string code;
             iss >> code >> ws;
             cout << "key " << key << " code " << code << endl;
 
-            newCodeTbl[key[0]] = code;
+            newCodeTbl[key] = code;
         }
 
         codeTbl = std::move(newCodeTbl);
@@ -202,6 +210,7 @@ namespace ptlmuh006{
         ostringstream oss;
         int index = 0;
         shared_ptr<HuffmanNode> curr = root;
+        cout << root->getLeftChild() << endl;
 
         while(index < encodedData.length()){
             if(curr->getData() != '\0'){
@@ -222,13 +231,17 @@ namespace ptlmuh006{
         currNode = root;
         for(int i = 0; i < code.length(); i++){
 
-            if((int)code[i] == 0){
+
+            if(code[i] == '0'){
+//                cout << "yo" << endl;
                 if(currNode->getLeftChild() == nullptr){
                     shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
                     currNode->setLeftChild(emptyNode);
+//                    cout << "here " << currNode->getLeftChild() << endl;
                 }
                 currNode = currNode->getLeftChild();
             }else{
+//                cout << "LO" << endl;
                 if(currNode->getRightChild() == nullptr){
                     shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
                     currNode->setRightChild(emptyNode);
@@ -236,7 +249,6 @@ namespace ptlmuh006{
                 currNode = currNode->getRightChild();
             }
         }
-
         currNode->setData(key);
     }
 }
