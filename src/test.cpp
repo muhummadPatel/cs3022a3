@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdio.h>
 #include <unordered_map>
 
 #include "huffman.h"
@@ -155,10 +156,55 @@ TEST_CASE("Files correctly extracted", "[extraction]"){
 
     SECTION("Code table correctly read in from header file"){
         //GIVEN: The filename of some compressed input file to be extracted
-        std::string
+        std::string inputFilename = "compressed";
+        std::ofstream headerFile(inputFilename + ".hdr");
+        headerFile << "3" << std::endl;
+        headerFile << "a 10" << std::endl;
+        headerFile << "b 11" << std::endl;
+        headerFile << "c 0" << std::endl;
+        headerFile.close();
 
         //WHEN: We try to read in the code table stored in the header file
+        std::unordered_map<char, std::string> codeTbl = huff.readInCodeTable(inputFilename);
 
         //THEN: We should get the correct code table in the returned map
+        REQUIRE( codeTbl.size() == 3 );
+        REQUIRE( codeTbl['a'] == "10" );
+        REQUIRE( codeTbl['b'] == "11" );
+        REQUIRE( codeTbl['c'] == "0" );
     }
+
+    SECTION("Data correctly extracted"){
+        //GIVEN: Some compressed input file and header file and an outputFilename
+        std::string inputFilename = "compressed";
+        std::ofstream inputFile(inputFilename);
+        inputFile << "1011011111111100000100" << std::endl; //aabbbbccccc
+        inputFile.close();
+
+        std::ofstream inputHeaderFile(inputFilename + ".hdr");
+        inputHeaderFile << "4" << std::endl;
+        inputHeaderFile << "a 101" << std::endl;
+        inputHeaderFile << "b 11" << std::endl;
+        inputHeaderFile << "c 0" << std::endl;
+        inputHeaderFile << "\n 100" << std::endl;
+        inputHeaderFile.close();
+        std::string outputFilename = "extracted";
+
+        //WHEN: We try to extract the compressed data
+        huff.extract(inputFilename, outputFilename);
+
+        //THEN: We should have written the correct extracted data to the outputFile
+        std::ifstream outputFile(outputFilename);
+        REQUIRE( outputFile.fail() == false );
+        std::string extractedData;
+        outputFile >> extractedData >> std::ws;
+        REQUIRE( extractedData == "aabbbbccccc" );
+    }
+}
+
+TEST_CASE("cleanup", "[cleanup]"){
+    remove("test");
+    remove("compressed");
+    remove("compressed.hdr");
+    remove("extracted");
 }
