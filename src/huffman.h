@@ -3,9 +3,11 @@
 
 #include <memory>
 #include <unordered_map>
+#include <string>
 
 namespace ptlmuh006{
 
+    //TODO: add in parameter names
     class HuffmanNode{
         private:
             char data;
@@ -14,8 +16,18 @@ namespace ptlmuh006{
             std::shared_ptr<HuffmanNode> rightChild;
 
         public:
+            //default constructor
             HuffmanNode(char dat = '\0', int freq = 0): data(dat), frequency(freq), leftChild(nullptr), rightChild(nullptr){};
-            //TODO: oher RAII methods here
+            //copy constructor
+            HuffmanNode(const HuffmanNode& other);
+            //move constructor
+            HuffmanNode(HuffmanNode&& other);
+            //destructor
+            ~HuffmanNode();
+            //copy assignment
+            HuffmanNode& operator= (const HuffmanNode& rhs);
+            //move assignment
+            HuffmanNode& operator= (HuffmanNode&& rhs);
 
             char getData();
             int getFrequency();
@@ -34,11 +46,25 @@ namespace ptlmuh006{
 //            std::unordered_map<char, std::string> codeTbl;
 
         public:
+            //default constructor
             HuffmanTree(): root(nullptr){};
-            //TODO: other RAII methods here
+            //copy constructor
+            HuffmanTree(const HuffmanTree& other);
+            //move constructor
+            HuffmanTree(HuffmanTree&& other);
+            //destructor
+            ~HuffmanTree();
+            //copy assignment
+            HuffmanTree& operator= (const HuffmanTree& rhs);
+            //move assignment
+            HuffmanTree& operator= (HuffmanTree&& rhs);
 
-            void build(std::string data);
+            //TODO: some of these should be private
+            void build(std::string);
             void genCodeTbl(std::shared_ptr<HuffmanNode>, std::string);
+            void compress(std::string, std::string);
+            void extract(std::string);
+            void addToTree(char, std::string);
     };
 
 }

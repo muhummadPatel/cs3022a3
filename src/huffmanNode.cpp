@@ -6,6 +6,57 @@ namespace ptlmuh006{
 
     using namespace std;
 
+    HuffmanNode::HuffmanNode(const HuffmanNode& other){
+        //copy constructor
+        data = other.data;
+        frequency = other.frequency;
+        leftChild = other.leftChild;
+        rightChild = other.rightChild;
+    }
+
+    HuffmanNode::HuffmanNode(HuffmanNode&& other){
+        //move constructor
+        data = other.data;
+        frequency = other.frequency;
+        leftChild = other.leftChild;
+        rightChild = other.rightChild;
+
+        other.data = '\0';
+        other.frequency = 0;
+        other.leftChild = nullptr;
+        other.rightChild = nullptr;
+    }
+
+    HuffmanNode::~HuffmanNode(){
+        //destructor
+        //TODO: anything to put here really?
+    }
+
+    HuffmanNode& HuffmanNode::operator= (const HuffmanNode& rhs){
+        //copy assignment
+        data = rhs.data;
+        frequency = rhs.frequency;
+        leftChild = rhs.leftChild;
+        rightChild = rhs.rightChild;
+
+        return *this;
+    }
+
+    HuffmanNode& HuffmanNode::operator= (HuffmanNode&& rhs){
+        //move assignment
+        data = rhs.data;
+        frequency = rhs.frequency;
+        leftChild = rhs.leftChild;
+        rightChild = rhs.rightChild;
+
+        rhs.data = '\0';
+        rhs.frequency = 0;
+        rhs.leftChild = nullptr;
+        rhs.rightChild = nullptr;
+
+        return *this;
+    }
+
     char HuffmanNode::getData(){
         return data;
     }

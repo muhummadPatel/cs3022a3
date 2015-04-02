@@ -1,16 +1,53 @@
 #include <unordered_map>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <string>
 
 #include "huffman.h"
+#include "reader.h"
 
 namespace ptlmuh006{
 
     using namespace std;
 
-    std::unordered_map<char, std::string> codeTbl;
+    //TODO: move to header file?
+    unordered_map<char, std::string> codeTbl;
+
+    HuffmanTree::HuffmanTree(const HuffmanTree& other){
+        //copy constructor
+        root = other.root;
+    }
+
+    HuffmanTree::HuffmanTree(HuffmanTree&& other){
+        //move constructor
+        root = other.root;
+
+        other.root = nullptr;
+    }
+
+    HuffmanTree::~HuffmanTree(){
+        //destructor
+        //TODO: anything to put here really?
+    }
+
+    HuffmanTree& HuffmanTree::operator= (const HuffmanTree& rhs){
+        //copy assignment
+        root = rhs.root;
+
+        return *this;
+    }
+
+    HuffmanTree& HuffmanTree::operator= (HuffmanTree&& rhs){
+        //move assignment
+        root = rhs.root;
+
+        rhs.root = nullptr;
+
+        return *this;
+    }
 
     //TODO: Move this to somewhere decent
     bool compare(shared_ptr<HuffmanNode> one, shared_ptr<HuffmanNode> other){
@@ -92,4 +129,114 @@ namespace ptlmuh006{
         }
     }
 
+
+    void HuffmanTree::compress(std::string data, std::string outFilename){
+        ostringstream oss;
+        for(int i = 0; i < data.length(); i++){
+            oss << codeTbl[data[i]];
+        }
+
+        //writing compressed data to output file
+        string output = oss.str();
+        cout << "outputted stuff: " << output << endl;
+        ofstream outfile(outFilename);
+        outfile << output;
+        outfile.close();
+
+        //writing code table to header file
+        ofstream hdrfile(outFilename + ".hdr");
+        hdrfile << codeTbl.size() << endl;
+        for(auto it = codeTbl.begin(); it != codeTbl.end(); ++it){
+            ostringstream ss;
+            ss << it->first;
+            string ch = ss.str();
+
+            if(ch == " "){
+                ch = "/s";
+            }else if(ch == "\n"){
+                ch = "/n";
+            }
+
+            hdrfile << ch << " " << it->second << endl;
+        }
+        hdrfile.close();
+    }
+
+    void HuffmanTree::extract(std::string inputfilename){
+        unordered_map<char, std::string> newCodeTbl;
+
+        ifstream hdrFile(inputfilename + ".hdr");
+
+        int numFields;
+        hdrFile >> numFields >> ws;
+        cout << "numFields " << numFields << endl;
+
+        //TODO: check this matches with expected fields
+        //read in code table stored in header file
+        std::string data;
+        while(getline(hdrFile, data)){
+            //cout << "_" << data << "_" << endl;
+            istringstream iss(data);
+            string key;
+            iss >> key >> ws;
+            string code;
+            iss >> code >> ws;
+            cout << "key " << key << " code " << code << endl;
+
+            newCodeTbl[key[0]] = code;
+        }
+
+        codeTbl = std::move(newCodeTbl);
+
+        //build huffman tree represented by the new code table
+        root.reset(new HuffmanNode);
+        for(auto it = codeTbl.begin(); it != codeTbl.end(); ++it){
+            cout << "aight" << endl;
+            addToTree(it->first, it->second);
+        }
+
+        //decode input by decoding one letter at a time
+        ifstream compressedFile(inputfilename);
+        string encodedData;
+        getline(compressedFile, encodedData);
+        ostringstream oss;
+        int index = 0;
+        shared_ptr<HuffmanNode> curr = root;
+
+        while(index < encodedData.length()){
+            if(curr->getData() != '\0'){
+                oss << curr->getData();
+            }
+
+            if((int)encodedData[index] == 0){
+                curr = curr->getLeftChild();
+            }else{
+                curr = curr->getLeftChild();
+            }
+            index++;
+        }
+    }
+
+    void HuffmanTree::addToTree(char key, string code){
+        shared_ptr<HuffmanNode> currNode;
+        currNode = root;
+        for(int i = 0; i < code.length(); i++){
+
+            if((int)code[i] == 0){
+                if(currNode->getLeftChild() == nullptr){
+                    shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
+                    currNode->setLeftChild(emptyNode);
+                }
+                currNode = currNode->getLeftChild();
+            }else{
+                if(currNode->getRightChild() == nullptr){
+                    shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
+                    currNode->setRightChild(emptyNode);
+                }
+                currNode = currNode->getRightChild();
+            }
+        }
+
+        currNode->setData(key);
+    }
 }
