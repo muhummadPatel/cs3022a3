@@ -30,3 +30,6 @@
 
 .idea
 huffencode
+
+src/testhuff
+src/testhuff.dSYM
