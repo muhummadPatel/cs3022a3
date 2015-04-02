@@ -1,13 +1,10 @@
 CPP=g++
 CPPFLAGS=-std=c++11 -g
 EXE_NAME=huffencode
-FILES=reader.o driver.o huffmanNode.o huffmanTree.o
+FILES=driver.o huffmanNode.o huffmanTree.o
 
 $(EXE_NAME): $(FILES)
 	$(CPP) -o $(EXE_NAME) $(FILES) $(CPPFLAGS)
-
-reader.o: reader.cpp reader.h
-	$(CPP) -c -o reader.o reader.cpp $(CPPFLAGS)
 
 huffmanNode.o: huffmanNode.cpp huffman.h
 	$(CPP) -c -o huffmanNode.o huffmanNode.cpp $(CPPFLAGS)
