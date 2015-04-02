@@ -2,12 +2,10 @@
 #define HUFFMAN_H
 
 #include <memory>
-#include <unordered_map>
 #include <string>
 
 namespace ptlmuh006{
 
-    //TODO: add in parameter names
     class HuffmanNode{
         private:
             char data;
@@ -18,55 +16,44 @@ namespace ptlmuh006{
         public:
             //default constructor
             HuffmanNode(char dat = '\0', int freq = 0): data(dat), frequency(freq), leftChild(nullptr), rightChild(nullptr){};
-            //copy constructor
-            HuffmanNode(const HuffmanNode& other);
-            //move constructor
-            HuffmanNode(HuffmanNode&& other);
-            //destructor
-            ~HuffmanNode();
-            //copy assignment
-            HuffmanNode& operator= (const HuffmanNode& rhs);
-            //move assignment
-            HuffmanNode& operator= (HuffmanNode&& rhs);
+            HuffmanNode(const HuffmanNode& other);          //copy constructor
+            HuffmanNode(HuffmanNode&& other);               //move constructor
+            ~HuffmanNode();                                 //destructor
+            HuffmanNode& operator= (const HuffmanNode& rhs);//copy assignment
+            HuffmanNode& operator= (HuffmanNode&& rhs);     //move assignment
 
             char getData();
             int getFrequency();
-            void setData(char);
-            void setFrequency(int);
-            void setLeftChild(std::shared_ptr<HuffmanNode>);
-            void setRightChild(std::shared_ptr<HuffmanNode>);
+            void setData(char newData);
+            void setFrequency(int frequency);
+            void setLeftChild(std::shared_ptr<HuffmanNode> newLeft);
+            void setRightChild(std::shared_ptr<HuffmanNode> newRight);
             std::shared_ptr<HuffmanNode> getLeftChild();
             std::shared_ptr<HuffmanNode> getRightChild();
-            //static bool compare(HuffmanNode, HuffmanNode);
+            static bool compareNodes(std::shared_ptr<HuffmanNode> one, std::shared_ptr<HuffmanNode> other);
     };
 
     class HuffmanTree{
         private:
             std::shared_ptr<HuffmanNode> root;
-//            std::unordered_map<char, std::string> codeTbl;
 
         public:
-            //default constructor
-            HuffmanTree(): root(nullptr){};
-            //copy constructor
-            HuffmanTree(const HuffmanTree& other);
-            //move constructor
-            HuffmanTree(HuffmanTree&& other);
-            //destructor
-            ~HuffmanTree();
-            //copy assignment
-            HuffmanTree& operator= (const HuffmanTree& rhs);
-            //move assignment
-            HuffmanTree& operator= (HuffmanTree&& rhs);
+            HuffmanTree(): root(nullptr){};                 //default constructor
+            HuffmanTree(const HuffmanTree& other);          //copy constructor
+            HuffmanTree(HuffmanTree&& other);               //move constructor
+            ~HuffmanTree();                                 //destructor
+            HuffmanTree& operator= (const HuffmanTree& rhs);//copy assignment
+            HuffmanTree& operator= (HuffmanTree&& rhs);     //move assignment
 
-            //TODO: some of these should be private
-            void build(std::string);
-            void genCodeTbl(std::shared_ptr<HuffmanNode>, std::string);
-            void compress(std::string, std::string);
-            void extract(std::string);
-            void addToTree(char, std::string);
+        public:
+            void compress(std::string data, std::string outfilename);
+            void extract(std::string inputfilename);
+
+        private:
+            void build(std::string data);
+            void genCodeTbl(std::shared_ptr<HuffmanNode> current, std::string code);
+            void addToTree(char key, std::string code);
     };
-
 }
 
 #endif

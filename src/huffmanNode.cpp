@@ -89,9 +89,8 @@ namespace ptlmuh006{
             return rightChild;
     }
 
-    //TODO: make this static?
-//    bool HuffmanNode::compare(HuffmanNode one, HuffmanNode other){
-//        return (one.frequency < other.frequency);
-//    }
+    bool HuffmanNode::compareNodes(shared_ptr<HuffmanNode> one, shared_ptr<HuffmanNode> other){
+                return (one->getFrequency() > other->getFrequency());
 
+    }
 }

@@ -13,8 +13,8 @@ namespace ptlmuh006{
 
     using namespace std;
 
-    //TODO: move to header file?
-    unordered_map<char, std::string> codeTbl;
+    std::unordered_map<char, std::string> codeTbl;
+
 
     HuffmanTree::HuffmanTree(const HuffmanTree& other){
         //copy constructor
@@ -50,9 +50,7 @@ namespace ptlmuh006{
     }
 
     //TODO: Move this to somewhere decent
-    bool compare(shared_ptr<HuffmanNode> one, shared_ptr<HuffmanNode> other){
-            return (one->getFrequency() > other->getFrequency());
-    }
+
 
     void HuffmanTree::build(std::string data){
         //TODO: split these up into seperate private methods?
@@ -62,26 +60,15 @@ namespace ptlmuh006{
             freqTbl[data[i]]++;
         }
 
-//        for(auto it = freqTbl.begin(); it != freqTbl.end(); ++it){
-//            cout << it->first << " occurs " << it->second << " times" << endl;
-//        }
-
         //create the priority queue
         typedef bool(*fptr)(shared_ptr<HuffmanNode>, shared_ptr<HuffmanNode>);
 
-        priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, fptr> q(compare);
+        priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, fptr> q(HuffmanNode::compareNodes);
         for(auto it = freqTbl.begin(); it != freqTbl.end(); ++it){
             //TODO: fix this shit
             shared_ptr<HuffmanNode> temp(new HuffmanNode(it->first, it->second));
-//            q.push(HuffmanNode(it->first, it->second));
             q.push(temp);
         }
-
-//        while(!q.empty()){
-//            HuffmanNode i = q.top();
-//            cout << "q top " << i.getData() << " freq " << i.getFrequency() << endl;
-//            q.pop();
-//        }
 
         while(q.size() > 1){
             shared_ptr<HuffmanNode> n1 = q.top(); q.pop();
@@ -130,7 +117,11 @@ namespace ptlmuh006{
     }
 
 
-    void HuffmanTree::compress(std::string data, std::string outFilename){
+    void HuffmanTree::compress(std::string inFilename, std::string outFilename){
+        string data = readFile(inFilename);
+
+        build(data);
+
         ostringstream oss;
         for(int i = 0; i < data.length(); i++){
             oss << codeTbl[data[i]];
@@ -199,7 +190,7 @@ namespace ptlmuh006{
         //build huffman tree represented by the new code table
         root.reset(new HuffmanNode);
         for(auto it = codeTbl.begin(); it != codeTbl.end(); ++it){
-            cout << "aight" << endl;
+//            cout << "aight" << endl;
             addToTree(it->first, it->second);
         }
 
@@ -213,18 +204,25 @@ namespace ptlmuh006{
         cout << root->getLeftChild() << endl;
 
         while(index < encodedData.length()){
+            cout << encodedData[index];
             if(curr->getData() != '\0'){
                 oss << curr->getData();
+                curr = root;
             }
 
-            if((int)encodedData[index] == 0){
+            if(encodedData[index] == '0'){
                 curr = curr->getLeftChild();
             }else{
-                curr = curr->getLeftChild();
+                curr = curr->getRightChild();
             }
+
             index++;
         }
+
+        cout <<endl<< oss.str() << endl;
     }
+
+
 
     void HuffmanTree::addToTree(char key, string code){
         shared_ptr<HuffmanNode> currNode;
@@ -233,15 +231,12 @@ namespace ptlmuh006{
 
 
             if(code[i] == '0'){
-//                cout << "yo" << endl;
                 if(currNode->getLeftChild() == nullptr){
                     shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
                     currNode->setLeftChild(emptyNode);
-//                    cout << "here " << currNode->getLeftChild() << endl;
                 }
                 currNode = currNode->getLeftChild();
             }else{
-//                cout << "LO" << endl;
                 if(currNode->getRightChild() == nullptr){
                     shared_ptr<HuffmanNode> emptyNode(new HuffmanNode);
                     currNode->setRightChild(emptyNode);
