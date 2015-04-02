@@ -15,11 +15,14 @@ huffmanTree.o: huffmanTree.cpp huffman.h
 driver.o: driver.cpp
 	$(CPP) -c -o driver.o driver.cpp $(CPPFLAGS)
 
-tests:
+build-tests:
 	$(CPP) -c -o huffmanTree.o huffmanTree.cpp $(CPPFLAGS)
 	$(CPP) -c -o huffmanNode.o huffmanNode.cpp $(CPPFLAGS)
 	$(CPP) -c -o test.o test.cpp $(CPPFLAGS)
 	$(CPP) -o testhuff test.o huffmanNode.o huffmanTree.o $(CPPFLAGS)
+
+run-tests:
+	./testhuff
 
 clean:
 	rm -f *.o $(EXE_NAME)
